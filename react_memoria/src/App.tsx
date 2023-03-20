@@ -7,21 +7,31 @@ import RestartIcon from './svgs/restart.svg';
 import { GridItemType } from './types/GridItemType';
 import {items} from './data/items';
 import { GridItem } from './components/GridItem';
+import { formatTimeElapsed } from './helpers/formatTimeElapsed';
 
 const App = ()=>{
   const [playing, setPlaying] = useState<boolean>(false);
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
   const [moveCount, setMoveCount] = useState<number>(0);
-  const [showCount, setShowCount] = useState<number>(0);
+  const [showCount, setShownCount] = useState<number>(0);
   const [gridItems, setGridItems] = useState<GridItemType[]>([]);
 
   useEffect(() => resetAndCreateGrid(), []);
+
+  useEffect(() => {
+    const timer = setInterval(()=>{
+      if(playing){
+        setTimeElapsed(timeElapsed+1)
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [playing, timeElapsed]);
 
   const resetAndCreateGrid = ()=>{
     //passo 1: resetar o jogo
     setTimeElapsed(0);
     setMoveCount(0);
-    setShowCount(0);
+    setShownCount(0);
 
     //passo 2: criar o grid vazio
     let tmpGrid: GridItemType[] = [];
@@ -50,7 +60,14 @@ const App = ()=>{
   }
 
   const handleItemclick = (index:number)=>{
-
+if(playing && index !== null && showCount<2){
+  let tmpGrid = [...gridItems];
+  if (tmpGrid[index].permanentShown === false && tmpGrid[index].shown === false){
+    tmpGrid[index].shown = true;
+    setShownCount(showCount+1);
+  }
+  setGridItems(tmpGrid);
+}
   }
  
   return(
@@ -61,7 +78,7 @@ const App = ()=>{
         </C.LogoLink>
         
         <C.InfoArea>
-          <InfoItem label='Tempo' value='00:00'></InfoItem>
+          <InfoItem label='Tempo' value={formatTimeElapsed(timeElapsed)}></InfoItem>
           <InfoItem label='Movimentos' value='0'></InfoItem>
         </C.InfoArea>
         <Button label='Reiniciar' icon={RestartIcon} onClick={resetAndCreateGrid}></Button>
